@@ -10,14 +10,56 @@ identify the various structural parts of the compressed data formats. Most marke
 related group of parameters, some markers stand alone. All markers are assigned two-byte codes: an 0xFF byte followed 
 by a byte which os not equal to 0x00 of 0xFF.
 
-## How to use as a CLI?
+## How to use as a lib?
 
-### Just do it
-```go
-make && ./gjm-cli -p <path_to_file_in_fs | link_from_internet>
+```bash
+$: go get -u github.com/nzamulov/go-jpeg-markers
 ```
 
-### Examples
+```go
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"io"
+	"os"
+
+	"github.com/nzamulov/go-jpeg-markers"
+)
+
+func main() {
+	file, err := os.Open("./image.jpg")
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	img, err := io.ReadAll(bufio.NewReader(file))
+	if err != nil {
+		panic(err)
+	}
+
+	var (
+		markers     = gojpegmetrics.Scan(img)
+		isRSTmExist = gojpegmetrics.CheckRSTm(img)
+	)
+
+	fmt.Printf("markers len: %d, RSTm: %t\n", len(markers), isRSTmExist)
+}
+
+```
+
+```bash
+$: go run test.go
+markers len: 30, RSTm: false
+```
+
+## How to use as a CLI?
+
+```bash
+make && ./gjm-cli -p <path_to_file_in_fs | link_from_internet>
+```
 
 File from FS:
 ```go
