@@ -1,13 +1,20 @@
 # go-jpeg-markers
 
-Simply native tool for fetch all markers from JPEG image.
-Only Golang required, no any external deps.
+Simply native Go tool for fetch all markers from JPEG image.
+Only Go, no more...
+
+## What are "markers" in JPEG?
+
+According to [CCITT T.81 THE INTERNATIONAL (09/92)](https://www.w3.org/Graphics/JPEG/itu-t81.pdf) markers serve to
+identify the various structural parts of the compressed data formats. Most markers start marker segments containing a
+related group of parameters, some markers stand alone. All markers are assigned two-byte codes: an 0xFF byte followed 
+by a byte which os not equal to 0x00 of 0xFF.
 
 ## How to use as a CLI?
 
 ### Just do it
 ```go
-make && ./gjm-cli -p <PATH_TO_FILE or LINK_FROM_INTERNET>
+make && ./gjm-cli -p <path_to_file_in_fs | link_from_internet>
 ```
 
 ### Examples
@@ -47,7 +54,7 @@ $: make && ./gjm-cli -p ./testdata/image.jpg
 2024/03/19 17:56:07.580599 [go-jpeg-markers] offset:  47d39 - 0xFFD9: End Of Image
 ```
 
-File from Internet's link:
+File from link:
 ```go
 $: make && ./gjm-cli -p https://sun9-3.userapi.com/04lpzyhmisASMjjRkr9Zo3uzH6oy2cCvwGsV0A/rmohYF6YtUI.jpg  
 2024/03/19 18:40:32.989717 [go-jpeg-markers] offset:      0 - 0xFFD8: Start Of Image

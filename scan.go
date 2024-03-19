@@ -5,6 +5,17 @@ import (
 	_ "image/jpeg"
 )
 
+// A JPEG image consists of a sequence of segments, each beginning with a marker,
+// each of which begins with a 0xFF byte, followed by a byte indicating what kind
+// of marker it is. Some markers consist of just those two bytes; others are
+// followed by two bytes (high then low), indicating the length of marker-specific
+// payload data that follows. (The length includes the two bytes for the length,
+// but not the two bytes for the marker.) Some markers are followed by entropy-coded data;
+// the length of such a marker does not include the entropy-coded data. Note that consecutive
+// 0xFF bytes are used as fill bytes for padding purposes, although this fill byte padding
+// should only ever take place for markers immediately following entropy-coded scan data.
+
+// Common JPEG markers.
 const (
 	SOI  = 0xFFD8 // Start Of Image
 	EOI  = 0xFFD9 // End Of Image
@@ -17,6 +28,10 @@ const (
 	DRI  = 0xFFDD // Define Restart Interval
 )
 
+// Application-specific markers.
+//
+// For example, an Exif JPEG file uses an APP1 (EXIF) marker to store metadata,
+// laid out in a structure based closely on TIFF.
 const (
 	APP0 = 0xFFE0 + iota
 	EXIF
@@ -36,6 +51,11 @@ const (
 	APP15
 )
 
+// Restart markers.
+//
+// Inserted every r macroblocks, where r is the restart interval set by a DRI marker.
+// Not used if there was no DRI marker. The low three bits of the marker code cycle
+// in value from 0 to 7.
 const (
 	RST0 = 0xFFD0 + iota
 	RST1
@@ -173,6 +193,8 @@ func isRST(id int) bool {
 	}
 	return false
 }
+
+// API
 
 func Scan(img []byte) (markers []Marker) {
 	offset := 0
