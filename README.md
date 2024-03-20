@@ -10,6 +10,16 @@ identify the various structural parts of the compressed data formats. Most marke
 related group of parameters, some markers stand alone. All markers are assigned two-byte codes: an 0xFF byte followed 
 by a byte which os not equal to 0x00 of 0xFF.
 
+## Motivation
+
+Working a lot of times with images, in most cases with JPEG, there is no instrument was found through the Internet that
+will allow you to find or to list all JPEG markers spending a minimum time. This instrument will allow you to inspect or
+to check needed JPEG markers in extremely short time. For example, very helpful for work with GPU CUDA-workers and
+restart markers (RSTm) into the JPEG file.
+
+Also, inspired by:
+https://github.com/MavEtJu/jpeg-markers
+
 ## How to use as a lib?
 
 ```bash
