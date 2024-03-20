@@ -14,10 +14,10 @@ by a byte which os not equal to 0x00 of 0xFF.
 
 Working a lot of times with images, in most cases with JPEG, there is no instrument was found through the Internet that
 will allow you to find or to list all JPEG markers spending a minimum time. This instrument will allow you to inspect or
-to check needed JPEG markers in extremely short time. For example, very helpful for work with GPU CUDA-workers and
-restart markers (RSTm) into the JPEG file.
+to check needed JPEG markers in extremely short time. For example, very helpful for work with GPU CUDA-workers and for 
+checking restart markers (RSTm) into the JPEG file. Also, helpful for checking any markers in source code at runtime.
 
-Also, inspired by:
+Inspired by:
 https://github.com/MavEtJu/jpeg-markers
 
 ## How to use as a lib?
