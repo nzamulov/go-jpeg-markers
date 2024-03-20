@@ -11,6 +11,8 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	gojpegmetrics "github.com/nzamulov/go-jpeg-markers"
 )
 
 const HTTPTimeout = 3 * time.Minute
@@ -19,7 +21,7 @@ func isURL(path string) bool {
 	return strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://")
 }
 
-func output(markers []Marker) {
+func output(markers []gojpegmetrics.Marker) {
 	for _, m := range markers {
 		log.Printf("offset: %6x - %s\n", m.Offset, m.Comment)
 	}
@@ -83,7 +85,7 @@ func run(path string) {
 		panic(err)
 	}
 
-	output(Scan(img))
+	output(gojpegmetrics.Scan(img))
 }
 
 func main() {
