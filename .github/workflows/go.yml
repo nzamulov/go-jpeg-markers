@@ -1,14 +1,14 @@
 # This workflow will build a golang project
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
 
-name: Go
-
+name: CI
 on:
   push:
     branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
-
+  schedule:
+    - cron: "0 */12 * * *"
 jobs:
   ci:
     name: CI
@@ -26,8 +26,7 @@ jobs:
         go-version: ${{ matrix.go }}
 
     - name: Run gofmt
-      run: test -z "$(go fmt ./...)"
-      shell: bash
+      run: if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then exit 1; fi
 
     - name: Build
       run: go build -v ./...
