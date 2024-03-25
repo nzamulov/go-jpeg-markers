@@ -24,6 +24,11 @@ const (
 	COM = 0xFFFE // Comment
 	SOS = 0xFFDA // Start Of Scan
 	DRI = 0xFFDD // Define Restart Interval
+	JPG = 0xFFC8 // Reserved for JPEG extensions
+	DAC = 0xFFCC // Define arithmetic coding conditioning(s)
+	DNL = 0xFFDC // Define number of lines
+	DHP = 0xFFDE // Define hierarchical progression
+	EXP = 0xFFDF // Expand reference component(s)
 )
 
 // TODO: frame header scheme???
@@ -49,18 +54,18 @@ const (
 
 // Start of Frame: non-differential, arithmetic coding.
 const (
-	SOF8  = 0xFFC8 + iota // Reserved for JPEG extensions
-	SOF9                  // Extended sequential DCT
-	SOF10                 // Progressive DCT
-	SOF11                 // Lossless (sequential)
+	SOF8  = JPG + iota // SOF8 = JPG
+	SOF9               // Extended sequential DCT
+	SOF10              // Progressive DCT
+	SOF11              // Lossless (sequential)
 )
 
 // Start of Frame: differential, arithmetic coding.
 const (
-	SOF12 = 0xFFCC + iota // TODO: ???
-	SOF13                 // Differential sequential DCT
-	SOF14                 // Differential progressive DCT
-	SOF15                 // Differential lossless (sequential)
+	SOF12 = DAC + iota // SOF12 = DAC
+	SOF13              // Differential sequential DCT
+	SOF14              // Differential progressive DCT
+	SOF15              // Differential lossless (sequential)
 )
 
 // SOFComments goes from CCITT Rec. T.81 (1992 E)
@@ -176,6 +181,26 @@ func scan(b []byte) (int, Marker) {
 		return 2 + int(b[2])<<8 + int(b[3]), Marker{
 			ID:      DHT,
 			Comment: "0xFFC4: Define Huffman Table(s)",
+		}
+	case DNL:
+		return 2 + int(b[2])<<8 + int(b[3]), Marker{
+			ID:      DNL,
+			Comment: fmt.Sprintf("0xFFDC: Define number of lines [NL: %d]", int(b[4])<<8+int(b[5])),
+		}
+	case DHP:
+		return 2 + int(b[2])<<8 + int(b[3]), Marker{
+			ID: DHP,
+			Comment: fmt.Sprintf("0xFFDE: Define hierarchical progression [P:%d, Y:%d, X:%d, Nf:%d]",
+				b[4],
+				int(b[5])<<8+int(b[6]),
+				int(b[7])<<8+int(b[8]),
+				b[9],
+			),
+		}
+	case EXP:
+		return 2 + int(b[2])<<8 + int(b[3]), Marker{
+			ID:      EXP,
+			Comment: fmt.Sprintf("0xFFDF: Expand reference component(s) [Eh:%d, Ev:%d]", b[4], b[5]),
 		}
 	case SOF0, SOF1, SOF2, SOF3, SOF5, SOF6, SOF7, SOF8, SOF9, SOF10, SOF11, SOF12, SOF13, SOF14, SOF15:
 		return 2 + int(b[2])<<8 + int(b[3]), Marker{
