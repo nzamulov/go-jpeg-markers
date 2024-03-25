@@ -268,9 +268,19 @@ func scan(b []byte) (int, Marker) {
 			Comment: "0xFFD9: End Of Image",
 		}
 	default:
-		panic(fmt.Sprintf("unexpected marker: %x", h))
+		header := 2
+		offset := header
+		for {
+			if b[offset] == 0xFF && b[offset+1] != 0x00 { // run to any other marker
+				break
+			}
+			offset++
+		}
+		return offset, Marker{
+			ID:      int(h),
+			Comment: "unexpected marker",
+		}
 	}
-	return 0, Marker{}
 }
 
 func isRST(id int) bool {
