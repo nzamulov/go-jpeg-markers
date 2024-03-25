@@ -69,17 +69,19 @@ const (
 
 // SOFComments goes from CCITT Rec. T.81 (1992 E)
 var SOFComments = map[int]string{
-	SOF0:  "Baseline DCT",
-	SOF1:  "Extended sequential DCT",
-	SOF2:  "Progressive DCT, Huffman coding",
-	SOF3:  "Lossless (sequential)",
-	SOF5:  "Differential sequential DCT",
-	SOF6:  "Differential progressive DCT",
-	SOF7:  "Differential lossless (sequential)",
-	SOF8:  "Reserved for JPEG extensions",
+	SOF0: "Baseline DCT",
+	SOF1: "Extended sequential DCT",
+	SOF2: "Progressive DCT, Huffman coding",
+	SOF3: "Lossless (sequential)",
+	// SOF4 = DHT
+	SOF5: "Differential sequential DCT",
+	SOF6: "Differential progressive DCT",
+	SOF7: "Differential lossless (sequential)",
+	// SOF8 = JPG
 	SOF9:  "Extended sequential DCT",
 	SOF10: "Progressive DCT",
 	SOF11: "Lossless (sequential)",
+	// SOF12 = DAC
 	SOF13: "Differential sequential DCT",
 	SOF14: "Differential progressive DCT",
 	SOF15: "Differential lossless (sequential)",
@@ -201,7 +203,17 @@ func scan(b []byte) (int, Marker) {
 			ID:      EXP,
 			Comment: fmt.Sprintf("0xFFDF: Expand reference component(s) [Eh:%d, Ev:%d]", b[4], b[5]),
 		}
-	case SOF0, SOF1, SOF2, SOF3, SOF5, SOF6, SOF7, SOF8, SOF9, SOF10, SOF11, SOF12, SOF13, SOF14, SOF15:
+	case JPG:
+		return 2 + int(b[2])<<8 + int(b[3]), Marker{
+			ID:      JPG,
+			Comment: "0xFFC8: Reserved for JPEG extensions",
+		}
+	case DAC:
+		return 2 + int(b[2])<<8 + int(b[3]), Marker{
+			ID:      DAC,
+			Comment: fmt.Sprintf("0xFFCC: Define arithmetic coding conditioning(s) [Tc:%d, Tb:%d, Cs:%d]", b[4], b[5], b[6]),
+		}
+	case SOF0, SOF1, SOF2, SOF3, SOF5, SOF6, SOF7, SOF9, SOF10, SOF11, SOF13, SOF14, SOF15:
 		return 2 + int(b[2])<<8 + int(b[3]), Marker{
 			ID: SOF2,
 			Comment: fmt.Sprintf("0x%X: Start Of Frame (SOF%d) (%s) [P:%d, Y:%d, X:%d, Nf:%d]",
