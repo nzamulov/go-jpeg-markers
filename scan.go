@@ -31,7 +31,6 @@ const (
 	EXP = 0xFFDF // Expand reference component(s)
 )
 
-// TODO: frame header scheme???
 // Start of Frame header specifies the source image characteristics: the components of the frame, and the
 // sampling factors for each component, and specifies the destinations from which the quantized tables
 // to be used with each component are retrieved.
