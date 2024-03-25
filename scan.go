@@ -17,15 +17,50 @@ import (
 
 // Common JPEG markers.
 const (
-	SOI  = 0xFFD8 // Start Of Image
-	EOI  = 0xFFD9 // End Of Image
-	DQT  = 0xFFDB // Define Quantization Table(s)
-	DHT  = 0xFFC4 // Define Huffman Table(s)
-	SOF0 = 0xFFC0 // Baseline DCT
-	SOF2 = 0xFFC2 // Progressive DCT, Huffman coding
-	COM  = 0xFFFE // Comment
-	SOS  = 0xFFDA // Start Of Scan
-	DRI  = 0xFFDD // Define Restart Interval
+	SOI = 0xFFD8 // Start Of Image
+	EOI = 0xFFD9 // End Of Image
+	DQT = 0xFFDB // Define Quantization Table(s)
+	DHT = 0xFFC4 // Define Huffman Table(s)
+	COM = 0xFFFE // Comment
+	SOS = 0xFFDA // Start Of Scan
+	DRI = 0xFFDD // Define Restart Interval
+)
+
+// TODO: frame header scheme???
+// Start of Frame header specifies the source image characteristics: the components of the frame, and the
+// sampling factors for each component, and specifies the destinations from which the quantized tables
+// to be used with each component are retrieved.
+//
+// Start of Frame: non-differential, Huffman coding
+const (
+	SOF0 = 0xFFC0 + iota // Baseline DCT
+	SOF1                 // Extended sequential DCT
+	SOF2                 // Progressive DCT, Huffman coding
+	SOF3                 // Lossless (sequential)
+)
+
+// Start of Frame: differential, Huffman coding
+const (
+	SOF4 = DHT + iota // SOF4 = DHT
+	SOF5              // Differential sequential DCT
+	SOF6              // Differential progressive DCT
+	SOF7              // Differential lossless (sequential)
+)
+
+// Start of Frame: non-differential, arithmetic coding
+const (
+	SOF8  = 0xFFC8 + iota // Reserved for JPEG extensions
+	SOF9                  // Extended sequential DCT
+	SOF10                 // Progressive DCT
+	SOF11                 // Lossless (sequential)
+)
+
+// Start of Frame: differential, arithmetic coding
+const (
+	SOF12 = 0xFFCC + iota // TODO: ???
+	SOF13                 // Differential sequential DCT
+	SOF14                 // Differential progressive DCT
+	SOF15                 // Differential lossless (sequential)
 )
 
 // Application-specific markers.
@@ -92,7 +127,8 @@ func scan(b []byte) (int, Marker) {
 				"Xdensity:%d, "+
 				"Ydensity:%d, "+
 				"Xthumbnail:%d, "+
-				"Ythumbnail:%d]",
+				"Ythumbnail:%d"+
+				"]",
 				string(b[4:9]),        // Identifier (5 bytes), 4A 46 49 46 00 = "JFIF" in ASCII, terminated by a null byte
 				int(b[9]), int(b[10]), // First byte for major version, second byte for minor version (01 02 for 1.02)
 				b[11],
@@ -123,10 +159,15 @@ func scan(b []byte) (int, Marker) {
 			ID:      DHT,
 			Comment: "0xFFC4: Define Huffman Table(s)",
 		}
-	case SOF0: // TODO: all SOFs???
+	case SOF0:
 		return 2 + int(b[2])<<8 + int(b[3]), Marker{
 			ID:      SOF0,
 			Comment: "0xFFC0: Start of Frame (Baseline DCT)",
+		}
+	case SOF1, SOF3, SOF5, SOF6, SOF7, SOF8, SOF9, SOF10, SOF11, SOF12, SOF13, SOF14, SOF15:
+		return 2 + int(b[2])<<8 + int(b[3]), Marker{
+			ID:      int(h),
+			Comment: fmt.Sprintf("0x%X: SOF%d", h, h-SOF0),
 		}
 	case SOF2:
 		return 2 + int(b[2])<<8 + int(b[3]), Marker{
