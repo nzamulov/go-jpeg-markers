@@ -31,7 +31,7 @@ const (
 // sampling factors for each component, and specifies the destinations from which the quantized tables
 // to be used with each component are retrieved.
 //
-// Start of Frame: non-differential, Huffman coding
+// Start of Frame: non-differential, Huffman coding.
 const (
 	SOF0 = 0xFFC0 + iota // Baseline DCT
 	SOF1                 // Extended sequential DCT
@@ -39,7 +39,7 @@ const (
 	SOF3                 // Lossless (sequential)
 )
 
-// Start of Frame: differential, Huffman coding
+// Start of Frame: differential, Huffman coding.
 const (
 	SOF4 = DHT + iota // SOF4 = DHT
 	SOF5              // Differential sequential DCT
@@ -47,7 +47,7 @@ const (
 	SOF7              // Differential lossless (sequential)
 )
 
-// Start of Frame: non-differential, arithmetic coding
+// Start of Frame: non-differential, arithmetic coding.
 const (
 	SOF8  = 0xFFC8 + iota // Reserved for JPEG extensions
 	SOF9                  // Extended sequential DCT
@@ -55,13 +55,31 @@ const (
 	SOF11                 // Lossless (sequential)
 )
 
-// Start of Frame: differential, arithmetic coding
+// Start of Frame: differential, arithmetic coding.
 const (
 	SOF12 = 0xFFCC + iota // TODO: ???
 	SOF13                 // Differential sequential DCT
 	SOF14                 // Differential progressive DCT
 	SOF15                 // Differential lossless (sequential)
 )
+
+// SOFComments goes from CCITT Rec. T.81 (1992 E)
+var SOFComments = map[int]string{
+	SOF0:  "Baseline DCT",
+	SOF1:  "Extended sequential DCT",
+	SOF2:  "Progressive DCT, Huffman coding",
+	SOF3:  "Lossless (sequential)",
+	SOF5:  "Differential sequential DCT",
+	SOF6:  "Differential progressive DCT",
+	SOF7:  "Differential lossless (sequential)",
+	SOF8:  "Reserved for JPEG extensions",
+	SOF9:  "Extended sequential DCT",
+	SOF10: "Progressive DCT",
+	SOF11: "Lossless (sequential)",
+	SOF13: "Differential sequential DCT",
+	SOF14: "Differential progressive DCT",
+	SOF15: "Differential lossless (sequential)",
+}
 
 // Application-specific markers.
 //
@@ -159,20 +177,13 @@ func scan(b []byte) (int, Marker) {
 			ID:      DHT,
 			Comment: "0xFFC4: Define Huffman Table(s)",
 		}
-	case SOF0:
-		return 2 + int(b[2])<<8 + int(b[3]), Marker{
-			ID:      SOF0,
-			Comment: "0xFFC0: Start of Frame (Baseline DCT)",
-		}
-	case SOF1, SOF3, SOF5, SOF6, SOF7, SOF8, SOF9, SOF10, SOF11, SOF12, SOF13, SOF14, SOF15:
-		return 2 + int(b[2])<<8 + int(b[3]), Marker{
-			ID:      int(h),
-			Comment: fmt.Sprintf("0x%X: SOF%d", h, h-SOF0),
-		}
-	case SOF2:
+	case SOF0, SOF1, SOF2, SOF3, SOF5, SOF6, SOF7, SOF8, SOF9, SOF10, SOF11, SOF12, SOF13, SOF14, SOF15:
 		return 2 + int(b[2])<<8 + int(b[3]), Marker{
 			ID: SOF2,
-			Comment: fmt.Sprintf("0xFFC2: Start Of Frame (Progressive DCT, Huffman coding) [P:%d, Y:%d, X:%d, Nf:%d]",
+			Comment: fmt.Sprintf("0x%X: Start Of Frame (SOF%d) (%s) [P:%d, Y:%d, X:%d, Nf:%d]",
+				h,
+				h-SOF0,
+				SOFComments[int(h)],
 				b[4],
 				int(b[5])<<8+int(b[6]),
 				int(b[7])<<8+int(b[8]),
