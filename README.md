@@ -1,4 +1,4 @@
-# go-jpeg-markers
+# go-jpeg-markers [![CI][ci-img]][ci]
 
 Simply native Go tool for fetch all markers from JPEG image.
 Only Go, no more...
@@ -464,3 +464,6 @@ make scan https://sun9-3.userapi.com/04lpzyhmisASMjjRkr9Zo3uzH6oy2cCvwGsV0A/rmoh
 
 ## License
 [Mozilla Public License Version 2.0](./LICENSE)
+
+[ci-img]: https://github.com/nzamulov/go-jpeg-markers/workflows/CI/badge.svg
+[ci]: https://github.com/nzamulov/go-jpeg-markers/actions
