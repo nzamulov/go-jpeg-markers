@@ -6,3 +6,10 @@ $(NAME):
 
 clean:
 	rm -f $(BIN_PATH)
+
+.SILENT:
+scan: clean $(NAME)
+	$(BIN_PATH) -p $(lastword $(MAKECMDGOALS))
+
+%.jpeg %.jpg:
+	exit
