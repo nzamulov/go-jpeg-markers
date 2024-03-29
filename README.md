@@ -8,7 +8,7 @@ Only Go, no more...
 According to [CCITT T.81 THE INTERNATIONAL (09/92)](https://www.w3.org/Graphics/JPEG/itu-t81.pdf) markers serve to
 identify the various structural parts of the compressed data formats. Most markers start marker segments containing a
 related group of parameters, some markers stand alone. All markers are assigned two-byte codes: an 0xFF byte followed 
-by a byte which os not equal to 0x00 of 0xFF.
+by a byte which is not equal to 0x00 or 0xFF.
 
 ## Motivation
 
