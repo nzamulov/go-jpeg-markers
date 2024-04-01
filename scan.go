@@ -1,4 +1,4 @@
-package gojpegmetrics
+package gojpegmarkers
 
 import (
 	"fmt"
@@ -131,17 +131,39 @@ type Marker struct {
 	Comment    string
 }
 
-func scan(b []byte) (int, Marker) {
+func getOffsetMaybeWithLen(b []byte, skipLen bool) int {
+	// if 'b' passed as broken data (less than marker length itself), just return the length of b
+	if len(b) < 2 {
+		return len(b)
+	}
+	if skipLen {
+		return 2
+	}
+	// if 'b' passed as broken data (with marker but with broken length), just return the length of b
+	if len(b) < 4 {
+		return len(b)
+	}
+	return 2 + int(b[2])<<8 + int(b[3])
+}
+
+func Scan(b []byte) (int, Marker) {
+	if len(b) <= 1 {
+		return len(b), Marker{Comment: "broken marker"}
+	}
+
 	h := uint16(b[0])<<8 | uint16(b[1])
 
 	switch h {
 	case SOI:
-		return 2, Marker{
+		return getOffsetMaybeWithLen(b, true), Marker{
 			ID:      SOI,
 			Comment: "0xFFD8: Start Of Image",
 		}
 	case APP0:
-		return 2 + int(b[2])<<8 + int(b[3]), Marker{
+		if len(b) < 18 {
+			return len(b), Marker{Comment: "broken marker"}
+		}
+		return getOffsetMaybeWithLen(b, false), Marker{
 			ID: APP0,
 			// According to https://en.wikipedia.org/wiki/JPEG_File_Interchange_Format
 			Comment: fmt.Sprintf("0xFFE0: JFIF ["+
@@ -164,32 +186,38 @@ func scan(b []byte) (int, Marker) {
 			),
 		}
 	case APP2, APP3, APP4, APP5, APP6, APP7, APP8, APP9, APP10, APP11, APP12, APP13, APP14, APP15:
-		return 2 + int(b[2])<<8 + int(b[3]), Marker{
+		return getOffsetMaybeWithLen(b, false), Marker{
 			ID:      int(h),
 			Comment: fmt.Sprintf("0x%X: APP%d", h, h-APP0),
 		}
 	case EXIF:
-		return 2 + int(b[2])<<8 + int(b[3]), Marker{
+		return getOffsetMaybeWithLen(b, false), Marker{
 			ID:      EXIF,
 			Comment: "0xFFE1: EXIF",
 		}
 	case DQT:
-		return 2 + int(b[2])<<8 + int(b[3]), Marker{
+		return getOffsetMaybeWithLen(b, false), Marker{
 			ID:      DQT,
 			Comment: "0xFFDB: Define Quantization Table(s)",
 		}
 	case DHT:
-		return 2 + int(b[2])<<8 + int(b[3]), Marker{
+		return getOffsetMaybeWithLen(b, false), Marker{
 			ID:      DHT,
 			Comment: "0xFFC4: Define Huffman Table(s)",
 		}
 	case DNL:
-		return 2 + int(b[2])<<8 + int(b[3]), Marker{
+		if len(b) < 6 {
+			return len(b), Marker{Comment: "broken marker"}
+		}
+		return getOffsetMaybeWithLen(b, false), Marker{
 			ID:      DNL,
 			Comment: fmt.Sprintf("0xFFDC: Define number of lines [NL: %d]", int(b[4])<<8+int(b[5])),
 		}
 	case DHP:
-		return 2 + int(b[2])<<8 + int(b[3]), Marker{
+		if len(b) < 10 {
+			return len(b), Marker{Comment: "broken marker"}
+		}
+		return getOffsetMaybeWithLen(b, false), Marker{
 			ID: DHP,
 			Comment: fmt.Sprintf("0xFFDE: Define hierarchical progression [P:%d, Y:%d, X:%d, Nf:%d]",
 				b[4],
@@ -199,22 +227,31 @@ func scan(b []byte) (int, Marker) {
 			),
 		}
 	case EXP:
-		return 2 + int(b[2])<<8 + int(b[3]), Marker{
+		if len(b) < 6 {
+			return len(b), Marker{Comment: "broken marker"}
+		}
+		return getOffsetMaybeWithLen(b, false), Marker{
 			ID:      EXP,
 			Comment: fmt.Sprintf("0xFFDF: Expand reference component(s) [Eh:%d, Ev:%d]", b[4], b[5]),
 		}
 	case JPG:
-		return 2 + int(b[2])<<8 + int(b[3]), Marker{
+		return getOffsetMaybeWithLen(b, false), Marker{
 			ID:      JPG,
 			Comment: "0xFFC8: Reserved for JPEG extensions",
 		}
 	case DAC:
-		return 2 + int(b[2])<<8 + int(b[3]), Marker{
+		if len(b) < 7 {
+			return len(b), Marker{Comment: "broken marker"}
+		}
+		return getOffsetMaybeWithLen(b, false), Marker{
 			ID:      DAC,
 			Comment: fmt.Sprintf("0xFFCC: Define arithmetic coding conditioning(s) [Tc:%d, Tb:%d, Cs:%d]", b[4], b[5], b[6]),
 		}
 	case SOF0, SOF1, SOF2, SOF3, SOF5, SOF6, SOF7, SOF9, SOF10, SOF11, SOF13, SOF14, SOF15:
-		return 2 + int(b[2])<<8 + int(b[3]), Marker{
+		if len(b) < 10 {
+			return len(b), Marker{Comment: "broken marker"}
+		}
+		return getOffsetMaybeWithLen(b, false), Marker{
 			ID: SOF2,
 			Comment: fmt.Sprintf("0x%X: Start Of Frame (SOF%d) (%s) [P:%d, Y:%d, X:%d, Nf:%d]",
 				h,
@@ -227,15 +264,18 @@ func scan(b []byte) (int, Marker) {
 			),
 		}
 	case COM:
-		return 2 + int(b[2])<<8 + int(b[3]), Marker{
+		return getOffsetMaybeWithLen(b, false), Marker{
 			ID:      COM,
 			Comment: "0xFFF3: Comment",
 		}
 	case SOS:
-		header := 2 + int(b[2])<<8 + int(b[3])
+		if len(b) < 5 {
+			return len(b), Marker{Comment: "broken marker"}
+		}
+		header := getOffsetMaybeWithLen(b, false)
 		offset := header
 		for {
-			if b[offset] == 0xFF && b[offset+1] != 0x00 { // run to any other marker
+			if offset+1 >= len(b) || (b[offset] == 0xFF && b[offset+1] != 0x00) { // run to any other marker
 				break
 			}
 			offset++
@@ -245,15 +285,18 @@ func scan(b []byte) (int, Marker) {
 			Comment: fmt.Sprintf("0xFFDA: Start Of Scan [Ns: %d] (%d bytes)", b[4], offset-header),
 		}
 	case DRI:
-		return 2 + int(b[2])<<8 + int(b[3]), Marker{
+		if len(b) < 6 {
+			return len(b), Marker{Comment: "broken marker"}
+		}
+		return getOffsetMaybeWithLen(b, false), Marker{
 			ID:      DRI,
 			Comment: fmt.Sprintf("0xFFDD: Define Restart Interval [Ri: %d]", int(b[4])<<8+int(b[5])),
 		}
 	case RST0, RST1, RST2, RST3, RST4, RST5, RST6, RST7:
-		header := 2
+		header := getOffsetMaybeWithLen(b, true)
 		offset := header
 		for {
-			if b[offset] == 0xFF && b[offset+1] != 0x00 { // run to any other marker
+			if offset+1 >= len(b) || (b[offset] == 0xFF && b[offset+1] != 0x00) { // run to any other marker
 				break
 			}
 			offset++
@@ -263,15 +306,15 @@ func scan(b []byte) (int, Marker) {
 			Comment: fmt.Sprintf("0x%X: RST%d (%d bytes)", h, h-RST0, offset-header),
 		}
 	case EOI:
-		return 0, Marker{
+		return getOffsetMaybeWithLen(b, true), Marker{
 			ID:      EOI,
 			Comment: "0xFFD9: End Of Image",
 		}
 	default:
-		header := 2
+		header := getOffsetMaybeWithLen(b, true)
 		offset := header
 		for {
-			if b[offset] == 0xFF && b[offset+1] != 0x00 { // run to any other marker
+			if offset+1 >= len(b) || (b[offset] == 0xFF && b[offset+1] != 0x00) { // run to any other marker
 				break
 			}
 			offset++

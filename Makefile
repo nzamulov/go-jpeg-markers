@@ -13,3 +13,6 @@ scan: clean $(NAME)
 
 %.jpeg %.jpg:
 	exit
+
+fuzzing:
+	@go test -fuzz=Fuzz
