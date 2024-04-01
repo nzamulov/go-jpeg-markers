@@ -51,11 +51,11 @@ func main() {
 	}
 
 	var (
-		markers     = gojpegmetrics.Scan(img)
-		isRSTmExist = gojpegmetrics.CheckRSTm(img)
+		markers = gojpegmarkers.GetAllMarkers(img)
+		hasRSTm = gojpegmarkers.HasRSTm(img)
 	)
 
-	fmt.Printf("markers len: %d, RSTm: %t\n", len(markers), isRSTmExist)
+	fmt.Printf("markers len: %d, RSTm: %t\n", len(markers), hasRSTm)
 }
 ```
 
