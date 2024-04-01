@@ -1,4 +1,4 @@
-package gojpegmetrics
+package gojpegmarkers
 
 func isRST(id int) bool {
 	for i := 0; i <= 7; i++ {
@@ -9,9 +9,13 @@ func isRST(id int) bool {
 	return false
 }
 
-func Scan(img []byte) (markers []Marker) {
+func GetAllMarkers(img []byte) (markers []Marker) {
 	offset := 0
 	for {
+		// broken data was passed and offset goes far away than bound
+		if offset >= len(img) {
+			break
+		}
 		n, marker := scan(img[offset:])
 		marker.Offset = offset
 		markers = append(markers, marker)
@@ -23,8 +27,8 @@ func Scan(img []byte) (markers []Marker) {
 	return
 }
 
-func CheckRSTm(img []byte) bool {
-	markers := Scan(img)
+func HasRSTm(img []byte) bool {
+	markers := GetAllMarkers(img)
 	for _, marker := range markers {
 		if isRST(marker.ID) {
 			return true
