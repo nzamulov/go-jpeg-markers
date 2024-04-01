@@ -146,7 +146,7 @@ func getOffsetMaybeWithLen(b []byte, skipLen bool) int {
 	return 2 + int(b[2])<<8 + int(b[3])
 }
 
-func Scan(b []byte) (int, Marker) {
+func scan(b []byte) (int, Marker) {
 	if len(b) <= 1 {
 		return len(b), Marker{Comment: "broken marker"}
 	}

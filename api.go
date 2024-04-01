@@ -16,7 +16,7 @@ func GetAllMarkers(img []byte) (markers []Marker) {
 		if offset >= len(img) {
 			break
 		}
-		n, marker := Scan(img[offset:])
+		n, marker := scan(img[offset:])
 		marker.Offset = offset
 		markers = append(markers, marker)
 		if n == 0 { // EOI
