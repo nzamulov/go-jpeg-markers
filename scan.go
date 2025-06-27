@@ -1,8 +1,10 @@
 package gojpegmarkers
 
 import (
+	"encoding/binary"
 	"fmt"
 	_ "image/jpeg"
+	"math"
 )
 
 // A JPEG image consists of a sequence of segments, each beginning with a marker,
@@ -143,6 +145,8 @@ func getOffsetMaybeWithLen(b []byte, skipLen bool) int {
 	if len(b) < 4 {
 		return len(b)
 	}
+	//fmt.Println(2 + int(b[2])<<8 + int(b[3]))
+	//fmt.Printf("%s\n", b[4:16])
 	return 2 + int(b[2])<<8 + int(b[3])
 }
 
@@ -186,9 +190,106 @@ func scan(b []byte) (int, Marker) {
 			),
 		}
 	case APP2, APP3, APP4, APP5, APP6, APP7, APP8, APP9, APP10, APP11, APP12, APP13, APP14, APP15:
+		comment := fmt.Sprintf("0x%X: APP%d", h, h-APP0)
+
+		if h == APP2 {
+			l := int(b[2])<<8 + int(b[3])
+			fmt.Printf("LEN: %d\n", l)
+			comment += fmt.Sprintf(" [ALGO: %s]", string(b[4:16]))
+			fmt.Printf("%s\n", string(b[16:16+l]))
+
+			// #region: Header (128 bytes)
+			{
+				// Profile size
+				fmt.Println(int(b[16]), int(b[17]))
+				fmt.Println(int(b[18]), int(b[19]))
+				bits32 := binary.LittleEndian.Uint32(b[16:20])
+				fmt.Println("Profile size = ", bits32)
+				// CMM type
+				fmt.Println(string(b[20:25]))
+				// ...
+				// Profile version
+				fmt.Println(int(b[25])<<8 + int(b[26]))
+				// b[27] - must be 0
+				// b[28] - must be 0
+				// Device class
+				fmt.Println(string(b[29:34]))
+				// Canonical input space
+				fmt.Println(string(b[34:38]))
+				// Canonical output space
+				fmt.Println(string(b[38:42]))
+
+				// Date
+				year := int(b[42])<<8 + int(b[43])
+				fmt.Println(year)
+				month := int(b[44])<<8 + int(b[45])
+				fmt.Println(month)
+				day := int(b[46])<<8 + int(b[47])
+				fmt.Println(day)
+				hour := int(b[48])<<8 + int(b[49])
+				fmt.Println(hour)
+				minute := int(b[50])<<8 + int(b[51])
+				fmt.Println(minute)
+				second := int(b[52])<<8 + int(b[53])
+				fmt.Println(second)
+
+				// Profile file signature
+				fmt.Println(string(b[54:58]))
+
+				//  Primary platform target for the profile
+				fmt.Println(string(b[58:62]))
+
+				// Flags
+				fmt.Println(string(b[62:66]))
+
+				// Device manufacturer of the device for which this profile is created
+				fmt.Println(string(b[66:70]))
+
+				// Device model of the device for which this profile is created
+				fmt.Println(string(b[70:74]))
+
+				// Device attributes unique to the particular device setup such as media type
+				fmt.Println(string(b[74:82]))
+
+				// Rendering Intent
+				fmt.Println(string(b[82:86]))
+
+				// The XYZ values of the illuminant of the profile connection space. This must correspond to D50. It is explained in more detail in Annex A.1 'Profile Connection Spaces'.
+				bits32 = binary.BigEndian.Uint32(b[86:90])
+				fmt.Println(math.Float32frombits(bits32))
+
+				bits32 = binary.BigEndian.Uint32(b[90:94])
+				fmt.Println(math.Float32frombits(bits32))
+
+				bits32 = binary.BigEndian.Uint32(b[94:98])
+				fmt.Println(math.Float32frombits(bits32))
+
+				// Identifies the creator of the profile
+				fmt.Println(string(b[98:102]))
+
+				// 44 bytes reserved for future expansion
+				fmt.Println(b[102:146])
+			}
+
+			// Tags count
+			bits32 := binary.BigEndian.Uint32(b[146:150])
+			fmt.Println(bits32)
+
+			fmt.Println(string(b[150:154]))
+			fmt.Println(b[154:158], string(b[154:158]), binary.BigEndian.Uint32(b[154:158]))
+			fmt.Println(b[158:162], string(b[158:162]), binary.BigEndian.Uint32(b[158:162]))
+			fmt.Println(string(b[16+252 : 16+353]))
+
+			fmt.Println(string(b[162:166]))
+			fmt.Println(b[166:170], string(b[166:170]), binary.BigEndian.Uint32(b[166:170]))
+			fmt.Println(b[174:178], string(b[174:178]), binary.BigEndian.Uint32(b[174:178]))
+
+			fmt.Println(string(b[148 : 18+l-148]))
+		}
+
 		return getOffsetMaybeWithLen(b, false), Marker{
 			ID:      int(h),
-			Comment: fmt.Sprintf("0x%X: APP%d", h, h-APP0),
+			Comment: comment,
 		}
 	case EXIF:
 		return getOffsetMaybeWithLen(b, false), Marker{
