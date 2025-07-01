@@ -39,7 +39,7 @@ import (
 )
 
 func main() {
-	file, err := os.Open("./image.jpg")
+	file, err := os.Open("./withoutRSTm.jpg")
 	if err != nil {
 		panic(err)
 	}
@@ -67,7 +67,7 @@ make scan <path_to_file_in_fs | link_from_internet>
 
 File from FS:
 ```bash
-make scan testdata/image.jpg
+make scan testdata/withoutRSTm.jpg
 ```
 ```bash
 2024/03/29 12:41:15.652918 [go-jpeg-markers] offset:      0 - 0xFFD8: Start Of Image

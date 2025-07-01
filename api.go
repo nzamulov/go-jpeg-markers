@@ -46,7 +46,7 @@ func HasRSTm(img []byte) bool {
 	return false
 }
 
-func GetImageXY(img []byte) (int, int) {
+func GetWidthHeight(img []byte) (int, int) {
 	markers := GetAllMarkers(img)
 	for _, marker := range markers {
 		if isSOF(marker.ID) && len(marker.AdditionalInfo) > 0 {
