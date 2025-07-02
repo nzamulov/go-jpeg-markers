@@ -16,3 +16,6 @@ scan: clean $(NAME)
 
 fuzzing:
 	@go test -fuzz=Fuzz
+
+test:
+	@go test -race -v -timeout 1m .

@@ -1,14 +1,12 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"flag"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -25,21 +23,6 @@ func output(markers []gojpegmarkers.Marker) {
 	for _, m := range markers {
 		log.Printf("offset: %6x - %s\n", m.Offset, m.Comment)
 	}
-}
-
-func readFile(path string) ([]byte, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		panic(err)
-	}
-
-	defer func(file *os.File) {
-		if err = file.Close(); err != nil {
-			log.Printf("file.Close() error: %v\n", err)
-		}
-	}(file)
-
-	return io.ReadAll(bufio.NewReader(file))
 }
 
 func downloadFile(link string) ([]byte, error) {
@@ -79,7 +62,7 @@ func run(path string) {
 	if isURL(path) {
 		img, err = downloadFile(path)
 	} else {
-		img, err = readFile(path)
+		img, err = gojpegmarkers.ReadFile(path)
 	}
 	if err != nil {
 		panic(err)

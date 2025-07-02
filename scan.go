@@ -126,9 +126,15 @@ const (
 	RST7
 )
 
+const (
+	WIDTH  = "X"
+	HEIGHT = "Y"
+)
+
 type Marker struct {
-	ID, Offset int
-	Comment    string
+	ID, Offset     int
+	Comment        string
+	AdditionalInfo map[string]interface{}
 }
 
 func getOffsetMaybeWithLen(b []byte, skipLen bool) int {
@@ -251,7 +257,8 @@ func scan(b []byte) (int, Marker) {
 		if len(b) < 10 {
 			return len(b), Marker{Comment: "broken marker"}
 		}
-		return getOffsetMaybeWithLen(b, false), Marker{
+
+		marker := Marker{
 			ID: SOF2,
 			Comment: fmt.Sprintf("0x%X: Start Of Frame (SOF%d) (%s) [P:%d, Y:%d, X:%d, Nf:%d]",
 				h,
@@ -262,7 +269,13 @@ func scan(b []byte) (int, Marker) {
 				int(b[7])<<8+int(b[8]),
 				b[9],
 			),
+			AdditionalInfo: make(map[string]interface{}),
 		}
+
+		marker.AdditionalInfo[WIDTH] = int(b[7])<<8 + int(b[8])
+		marker.AdditionalInfo[HEIGHT] = int(b[5])<<8 + int(b[6])
+
+		return getOffsetMaybeWithLen(b, false), marker
 	case COM:
 		return getOffsetMaybeWithLen(b, false), Marker{
 			ID:      COM,
